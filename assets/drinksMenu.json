@@ -1,0 +1,154 @@
+{
+    "categories": [
+        {
+            "category_name": "Cold Drinks",
+            "items": [
+                {
+                    "id": 101,
+                    "name": "Cold Coffee",
+                    "price": 4.50
+                },
+                {
+                    "id": 102,
+                    "name": "Iced Tea Lemon",
+                    "price": 3.20
+                },
+                {
+                    "id": 103,
+                    "name": "Nimbu Pani",
+                    "price": 2.80
+                },
+                {
+                    "id": 104,
+                    "name": "Rose Sharbat",
+                    "price": 3.00
+                },
+                {
+                    "id": 105,
+                    "name": "Mint Cooler",
+                    "price": 3.50
+                }
+            ]
+        },
+        {
+            "category_name": "Hot Drinks",
+            "items": [
+                {
+                    "id": 201,
+                    "name": "Masala Tea",
+                    "price": 2.50
+                },
+                {
+                    "id": 202,
+                    "name": "Ginger Tea",
+                    "price": 2.80
+                },
+                {
+                    "id": 203,
+                    "name": "Cardamom Tea",
+                    "price": 3.00
+                },
+                {
+                    "id": 204,
+                    "name": "Masala Coffee",
+                    "price": 3.20
+                },
+                {
+                    "id": 205,
+                    "name": "Hot Chocolate",
+                    "price": 3.80
+                }
+            ]
+        },
+        {
+            "category_name": "Lassi",
+            "items": [
+                {
+                    "id": 301,
+                    "name": "Mango Lassi",
+                    "price": 4.50
+                },
+                {
+                    "id": 302,
+                    "name": "Sweet Lassi",
+                    "price": 4.00
+                },
+                {
+                    "id": 303,
+                    "name": "Salted Lassi",
+                    "price": 4.00
+                },
+                {
+                    "id": 304,
+                    "name": "Rose Lassi",
+                    "price": 4.20
+                },
+                {
+                    "id": 305,
+                    "name": "Banana Lassi",
+                    "price": 4.50
+                }
+            ]
+        },
+        {
+            "category_name": "Milk Based",
+            "items": [
+                {
+                    "id": 401,
+                    "name": "Badam Milk",
+                    "price": 4.80
+                },
+                {
+                    "id": 402,
+                    "name": "Kesar Milk",
+                    "price": 5.00
+                },
+                {
+                    "id": 403,
+                    "name": "Rose Milk",
+                    "price": 4.50
+                },
+                {
+                    "id": 404,
+                    "name": "Chocolate Milk",
+                    "price": 4.20
+                },
+                {
+                    "id": 405,
+                    "name": "Vanilla Milk",
+                    "price": 4.20
+                }
+            ]
+        },
+        {
+            "category_name": "Mocktails",
+            "items": [
+                {
+                    "id": 501,
+                    "name": "Virgin Mojito",
+                    "price": 5.50
+                },
+                {
+                    "id": 502,
+                    "name": "Blue Lagoon",
+                    "price": 5.80
+                },
+                {
+                    "id": 503,
+                    "name": "Orange Sunrise",
+                    "price": 5.20
+                },
+                {
+                    "id": 504,
+                    "name": "Pineapple Punch",
+                    "price": 5.40
+                },
+                {
+                    "id": 505,
+                    "name": "Berry Cooler",
+                    "price": 5.90
+                }
+            ]
+        }
+    ]
+}
