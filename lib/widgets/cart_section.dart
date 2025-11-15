@@ -30,12 +30,12 @@ class CartSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Shopping Cart',
+            'Cart',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 180,
+            height: 360,
             child: ListView.builder(
               itemCount: cart.length,
               itemBuilder: (_, index) {

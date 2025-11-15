@@ -1,4 +1,4 @@
-import 'menu_item.dart';
+import 'package:mech_pos/models/menu_item.dart';
 
 class CartItem {
   final MenuItem item;

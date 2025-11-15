@@ -147,6 +147,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  ping_discover_network_plus:
+    dependency: "direct main"
+    description:
+      name: ping_discover_network_plus
+      sha256: d7acfbe5186f87dbfcadb29d06787e3f8421f28b6e5884102b2ace45b36d8e8a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   platform:
     dependency: transitive
     description:
@@ -312,6 +320,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  wifi_info_plugin_plus:
+    dependency: transitive
+    description:
+      name: wifi_info_plugin_plus
+      sha256: a47dbf602e4b3bf650e7ba01d01d85c4bcd4f2f303cd5f0c4aa98f810e3ef2d4
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.3"
 sdks:
   dart: ">=3.9.0 <4.0.0"
   flutter: ">=3.24.0"
