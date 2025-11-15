@@ -5,10 +5,7 @@ import 'package:mech_pos/services/printer_discovery.dart';
 class PrinterSelectionDialog extends StatefulWidget {
   final Function(PrinterInfo) onSelect;
 
-  const PrinterSelectionDialog({
-    super.key,
-    required this.onSelect,
-  });
+  const PrinterSelectionDialog({super.key, required this.onSelect});
 
   @override
   State<PrinterSelectionDialog> createState() => _PrinterSelectionDialogState();
@@ -20,19 +17,16 @@ class _PrinterSelectionDialogState extends State<PrinterSelectionDialog> {
   String manualIp = "";
   int manualPort = 9100;
 
-  Future<void> _scanPrinters() async {
+  void scanPrinters() async {
     setState(() => scanning = true);
-    try {
-      final subnet = await PrinterDiscovery.getSubnet();
-      final found = await PrinterDiscovery.scanPrinters(subnet: subnet, port: 9100);
-      setState(() {
-        printers = found;
-      });
-    } catch (e) {
-      // optional: show error toast / snackbar
-    } finally {
-      setState(() => scanning = false);
-    }
+
+    final subnet = await PrinterDiscovery.getSubnet();
+    final result = await PrinterDiscovery.scanPrinters(subnet: subnet);
+
+    setState(() {
+      printers = result;
+      scanning = false;
+    });
   }
 
   @override
@@ -45,7 +39,7 @@ class _PrinterSelectionDialogState extends State<PrinterSelectionDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ElevatedButton.icon(
-              onPressed: scanning ? null : _scanPrinters,
+              onPressed: scanning ? null : scanPrinters,
               icon: scanning ? const SizedBox.shrink() : const Icon(Icons.wifi),
               label: Text(scanning ? "Scanning..." : "Scan Network"),
             ),
@@ -75,7 +69,9 @@ class _PrinterSelectionDialogState extends State<PrinterSelectionDialog> {
             else if (!scanning)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: Text("No printers found yet. Try scanning or enter IP manually."),
+                child: Text(
+                  "No printers found yet. Try scanning or enter IP manually.",
+                ),
               ),
 
             const Divider(),
@@ -85,16 +81,22 @@ class _PrinterSelectionDialogState extends State<PrinterSelectionDialog> {
               alignment: Alignment.centerLeft,
               child: Text(
                 "Manual entry",
-                style: Theme.of(context).textTheme.subtitle1,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
             const SizedBox(height: 8),
             TextField(
-              decoration: const InputDecoration(labelText: "IP address", hintText: "192.168.0.196"),
+              decoration: const InputDecoration(
+                labelText: "IP address",
+                hintText: "192.168.0.196",
+              ),
               onChanged: (v) => manualIp = v.trim(),
             ),
             TextField(
-              decoration: const InputDecoration(labelText: "Port", hintText: "9100"),
+              decoration: const InputDecoration(
+                labelText: "Port",
+                hintText: "9100",
+              ),
               keyboardType: TextInputType.number,
               onChanged: (v) {
                 final p = int.tryParse(v.trim());

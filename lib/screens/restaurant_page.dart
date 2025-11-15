@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:mech_pos/models/cart_item.dart';
 import 'package:mech_pos/models/menu_category.dart';
 import 'package:mech_pos/models/menu_item.dart';
+import 'package:mech_pos/models/printer_info.dart';
+import 'package:mech_pos/services/printer_service.dart';
 import 'package:mech_pos/widgets/cart_section.dart';
 import 'package:mech_pos/widgets/menu_section.dart';
+import 'package:mech_pos/widgets/printer_selection_dialog.dart';
 
 Future<List<MenuCategory>> loadMenu(String path) async {
   final String response = await rootBundle.loadString(path);
@@ -79,21 +82,42 @@ class _RestaurantPageState extends State<RestaurantPage> {
       return;
     }
 
+    final subtotal = cart.fold(0.0, (sum, c) => sum + c.total);
+    final tax = subtotal * 0.07;
+    final total = subtotal + tax;
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Bill Generated'),
-        content: const Text('Bill printed successfully'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
+      builder: (_) {
+        return PrinterSelectionDialog(
+          onSelect: (PrinterInfo printer) async {
+            Navigator.pop(context);
+
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text("Printing...")));
+
+            final success = await PrinterService.printRestaurantBill(
+              ip: printer.ip,
+              port: printer.port,
+              items: cart,
+              subtotal: subtotal,
+              tax: tax,
+              total: total,
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(success ? "Bill printed" : "Printing failed"),
+              ),
+            );
+
+            if (success) {
               setState(() => cart.clear());
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+            }
+          },
+        );
+      },
     );
   }
 
