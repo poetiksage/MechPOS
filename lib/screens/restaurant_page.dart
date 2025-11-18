@@ -28,8 +28,8 @@ class RestaurantPage extends StatefulWidget {
 }
 
 class _RestaurantPageState extends State<RestaurantPage> {
-  late List<MenuCategory> drinksMenu;
-  late List<MenuCategory> foodMenu;
+  List<MenuCategory> drinksMenu = [];
+  List<MenuCategory> foodMenu = [];
   final List<CartItem> cart = [];
 
   @override
@@ -41,7 +41,6 @@ class _RestaurantPageState extends State<RestaurantPage> {
   void loadMenus() async {
     foodMenu = await loadMenu('assets/foodMenu.json');
     drinksMenu = await loadMenu('assets/drinksMenu.json');
-
     setState(() {});
   }
 
@@ -97,7 +96,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
               context,
             ).showSnackBar(const SnackBar(content: Text("Printing...")));
 
-            final success = await PrinterService.printRestaurantBill(
+            final didPrint = await PrinterService.printRestaurantBill(
               ip: printer.ip,
               port: printer.port,
               items: cart,
@@ -106,14 +105,17 @@ class _RestaurantPageState extends State<RestaurantPage> {
               total: total,
             );
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(success ? "Bill printed" : "Printing failed"),
-              ),
-            );
+            if (!mounted) return; // FIX HERE
 
-            if (success) {
+            if (didPrint) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("Bill printed")));
               setState(() => cart.clear());
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("Printing failed")));
             }
           },
         );

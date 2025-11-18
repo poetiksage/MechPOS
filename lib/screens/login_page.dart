@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mech_pos/db_helper.dart';
 import 'package:mech_pos/screens/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,14 +12,14 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() async {
+  void _login() {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    final isValid = await DBHelper.login(email, password);
-    if (!mounted) return;
+    const adminEmail = "n";
+    const adminPassword = "n";
 
-    if (isValid) {
+    if (email == adminEmail && password == adminPassword) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardPage()),
