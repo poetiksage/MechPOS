@@ -15,8 +15,7 @@ class CartSection extends StatelessWidget {
     required this.onRemove,
   });
 
-  double get subtotal =>
-      cart.fold(0, (sum, item) => sum + item.total);
+  double get subtotal => cart.fold(0, (sum, item) => sum + item.total);
 
   double get tax => subtotal * 0.07;
 
@@ -51,9 +50,12 @@ class CartSection extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(cartItem.item.name,
-                                  style:
-                                      const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(
+                                cartItem.item.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               Text(
                                 '₹${cartItem.item.price.toStringAsFixed(2)}',
                                 style: const TextStyle(
@@ -74,26 +76,31 @@ class CartSection extends StatelessWidget {
                           child: Text(
                             '₹${cartItem.total.toStringAsFixed(2)}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         Row(
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove, size: 18),
-                              onPressed: () =>
-                                  onUpdateQuantity(index, cartItem.quantity - 1),
+                              onPressed: () => onUpdateQuantity(
+                                index,
+                                cartItem.quantity - 1,
+                              ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add, size: 18),
-                              onPressed: () =>
-                                  onUpdateQuantity(index, cartItem.quantity + 1),
+                              onPressed: () => onUpdateQuantity(
+                                index,
+                                cartItem.quantity + 1,
+                              ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
-                                  size: 18, color: Colors.red),
+                              icon: const Icon(
+                                Icons.delete,
+                                size: 18,
+                                color: Colors.red,
+                              ),
                               onPressed: () => onRemove(index),
                             ),
                           ],
@@ -127,13 +134,18 @@ class CartSection extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
                     onPressed: onGenerateBill,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12.0),
                       child: Text(
                         'Generate Bill',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

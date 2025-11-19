@@ -142,13 +142,15 @@ class _RestaurantPageState extends State<RestaurantPage> {
               onAdd: _addToCart,
             ),
             const Divider(),
-            if (cart.isNotEmpty)
+            if (cart.isNotEmpty) ...[
               CartSection(
                 cart: cart,
                 onGenerateBill: _generateBill,
                 onUpdateQuantity: _updateQuantity,
                 onRemove: _removeFromCart,
               ),
+              const SizedBox(height: 60), // space at bottom
+            ],
           ],
         ),
       ),

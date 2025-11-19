@@ -13,5 +13,5 @@ class EscPosCommands {
   static List<int> alignCenter() => [esc, 97, 1];
   static List<int> alignLeft() => [esc, 97, 0];
 
-  static List<int> cut() => [gs, 86, 1];
+  static List<int> cut() => [gs, 86, 66, 0];
 }
