@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:mech_pos/models/cart_item.dart';
+import 'package:mech_pos/models/restaurant_info.dart';
 import 'package:mech_pos/services/escpos_commands.dart';
 import 'package:mech_pos/services/escpos_raw.dart';
 
 class PrinterService {
-  
   // 48 character two column helper
   static String twoCol(String left, String right, {int width = 48}) {
     final l = left.length;
@@ -38,6 +38,7 @@ class PrinterService {
     required double subtotal,
     required double tax,
     required double total,
+    required RestaurantInfo restaurant,
   }) async {
     final List<int> bytes = [];
 
@@ -46,6 +47,19 @@ class PrinterService {
 
       // Header
       bytes.addAll(EscPosCommands.alignCenter());
+      bytes.addAll(EscPosCommands.boldOn());
+      bytes.addAll(EscPosCommands.text(restaurant.name));
+      bytes.addAll(EscPosCommands.boldOff());
+
+      if (restaurant.address.isNotEmpty) {
+        bytes.addAll(EscPosCommands.text(restaurant.address));
+      }
+
+      if (restaurant.phone.isNotEmpty) {
+        bytes.addAll(EscPosCommands.text("Tel: ${restaurant.phone}"));
+      }
+
+      bytes.addAll(EscPosCommands.text(""));
       bytes.addAll(EscPosCommands.boldOn());
       bytes.addAll(EscPosCommands.text("RESTAURANT BILL"));
       bytes.addAll(EscPosCommands.boldOff());
@@ -99,8 +113,13 @@ class PrinterService {
         EscPosCommands.text("------------------------------------------------"),
       );
 
-      // Thank you
+      // Footer
       bytes.addAll(EscPosCommands.alignCenter());
+
+      if (restaurant.footerMessage.isNotEmpty) {
+        bytes.addAll(EscPosCommands.text(restaurant.footerMessage));
+      }
+
       bytes.addAll(EscPosCommands.text("Thank you"));
       bytes.addAll(EscPosCommands.text(""));
 

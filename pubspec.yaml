@@ -33,11 +33,14 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
   ping_discover_network_plus: ^0.0.5
+  shared_preferences: ^2.2.2
+  http: ^1.2.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   sqflite_common_ffi: ^2.3.6
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +61,7 @@ flutter:
   assets:
     - assets/drinksMenu.json
     - assets/foodMenu.json
+    - .env
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

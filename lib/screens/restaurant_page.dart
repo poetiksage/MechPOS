@@ -6,11 +6,15 @@ import 'package:mech_pos/models/cart_item.dart';
 import 'package:mech_pos/models/menu_category.dart';
 import 'package:mech_pos/models/menu_item.dart';
 import 'package:mech_pos/models/printer_info.dart';
+import 'package:mech_pos/models/restaurant_info.dart';
+import 'package:mech_pos/services/printer_prefs.dart';
 import 'package:mech_pos/services/printer_service.dart';
+import 'package:mech_pos/services/restaurant_service.dart';
 import 'package:mech_pos/widgets/cart_section.dart';
 import 'package:mech_pos/widgets/menu_section.dart';
 import 'package:mech_pos/widgets/printer_selection_dialog.dart';
 
+// Load JSON menu file
 Future<List<MenuCategory>> loadMenu(String path) async {
   final String response = await rootBundle.loadString(path);
   final data = jsonDecode(response);
@@ -35,15 +39,23 @@ class _RestaurantPageState extends State<RestaurantPage> {
   @override
   void initState() {
     super.initState();
-    loadMenus();
+    _loadMenus();
   }
 
-  void loadMenus() async {
-    foodMenu = await loadMenu('assets/foodMenu.json');
-    drinksMenu = await loadMenu('assets/drinksMenu.json');
-    setState(() {});
+  // Load food and drinks menu from assets
+  void _loadMenus() async {
+    final food = await loadMenu('assets/foodMenu.json');
+    final drinks = await loadMenu('assets/drinksMenu.json');
+
+    if (!mounted) return;
+
+    setState(() {
+      foodMenu = food;
+      drinksMenu = drinks;
+    });
   }
 
+  // Add item to cart
   void _addToCart(MenuItem item) {
     final existing = cart.firstWhere(
       (c) => c.item.name == item.name,
@@ -59,6 +71,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
     });
   }
 
+  // Update quantity or remove item
   void _updateQuantity(int index, int qty) {
     setState(() {
       if (qty > 0) {
@@ -69,57 +82,104 @@ class _RestaurantPageState extends State<RestaurantPage> {
     });
   }
 
+  // Remove from cart
   void _removeFromCart(int index) {
     setState(() => cart.removeAt(index));
   }
 
-  void _generateBill() {
+  // Helper to calculate totals
+  Map<String, double> _calculateTotals() {
+    final subtotal = cart.fold(0.0, (sum, c) => sum + c.total);
+    final tax = subtotal * 0.07;
+    final total = subtotal + tax;
+
+    return {"subtotal": subtotal, "tax": tax, "total": total};
+  }
+
+  // Print to a specific printer
+  void _printToPrinter(PrinterInfo printer) async {
+    final totals = _calculateTotals();
+    final subtotal = totals["subtotal"]!;
+    final tax = totals["tax"]!;
+    final total = totals["total"]!;
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Printing...")));
+
+    try {
+      // Fetch restaurant info just before printing
+      final RestaurantInfo restaurant =
+          await RestaurantService.fetchRestaurantInfo();
+
+      final didPrint = await PrinterService.printRestaurantBill(
+        ip: printer.ip,
+        port: printer.port,
+        items: cart,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        restaurant: restaurant,
+      );
+
+      if (!mounted) return;
+
+      if (didPrint) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Bill printed")));
+        setState(() => cart.clear());
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Printing failed")));
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to fetch restaurant info")),
+      );
+    }
+  }
+
+  // Generate bill → auto print or select printer
+  void _generateBill() async {
     if (cart.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Add items first')));
       return;
     }
 
-    final subtotal = cart.fold(0.0, (sum, c) => sum + c.total);
-    final tax = subtotal * 0.07;
-    final total = subtotal + tax;
+    // Step 1: Try saved printer
+    final savedPrinter = await PrinterPrefs.getSavedPrinter();
 
+    if (!mounted) return;
+
+    if (savedPrinter != null) {
+      _printToPrinter(savedPrinter);
+      return;
+    }
+
+    // Step 2: No saved printer → open selection popup
+    if (!mounted) return;
     showDialog(
       context: context,
-      builder: (_) {
-        return PrinterSelectionDialog(
-          onSelect: (PrinterInfo printer) async {
-            Navigator.pop(context);
+      builder: (_) => PrinterSelectionDialog(
+        onSelect: (PrinterInfo printer) async {
+          Navigator.pop(context);
 
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text("Printing...")));
+          // Save the printer
+          await PrinterPrefs.savePrinter(printer);
 
-            final didPrint = await PrinterService.printRestaurantBill(
-              ip: printer.ip,
-              port: printer.port,
-              items: cart,
-              subtotal: subtotal,
-              tax: tax,
-              total: total,
-            );
-
-            if (!mounted) return; // FIX HERE
-
-            if (didPrint) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text("Bill printed")));
-              setState(() => cart.clear());
-            } else {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text("Printing failed")));
-            }
-          },
-        );
-      },
+          if (!mounted) return;
+          _printToPrinter(printer);
+        },
+      ),
     );
   }
 
@@ -135,13 +195,17 @@ class _RestaurantPageState extends State<RestaurantPage> {
               categories: drinksMenu,
               onAdd: _addToCart,
             ),
+
             const Divider(),
+
             MenuSection(
               title: 'Food Menu',
               categories: foodMenu,
               onAdd: _addToCart,
             ),
+
             const Divider(),
+
             if (cart.isNotEmpty) ...[
               CartSection(
                 cart: cart,
@@ -149,7 +213,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
                 onUpdateQuantity: _updateQuantity,
                 onRemove: _removeFromCart,
               ),
-              const SizedBox(height: 60), // space at bottom
+              const SizedBox(height: 60),
             ],
           ],
         ),

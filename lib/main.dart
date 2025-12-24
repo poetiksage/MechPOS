@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mech_pos/screens/login_page.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // For desktop
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
-
+  
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 

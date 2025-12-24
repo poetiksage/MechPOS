@@ -1,13 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:mech_pos/screens/login_page.dart';
+import 'package:mech_pos/screens/menu_page.dart';
+import 'package:mech_pos/screens/profile_page.dart';
 import 'package:mech_pos/screens/restaurant_page.dart';
+import 'package:mech_pos/screens/settings_page.dart';
+import 'package:mech_pos/services/auth_service.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  void _logout() async {
+    await AuthService.logout();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: GridView.count(
@@ -16,14 +45,49 @@ class DashboardPage extends StatelessWidget {
           crossAxisSpacing: 16,
           children: [
             _buildServiceCard(
-              context,
               title: 'Restaurant',
               icon: Icons.restaurant,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const RestaurantPage(),
+                    builder: (_) => const RestaurantPage(),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'Settings',
+              icon: Icons.settings,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SettingsPage(),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'Profile',
+              icon: Icons.person,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProfilePage(),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'Menu',
+              icon: Icons.menu_book,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MenuPage(),
                   ),
                 );
               },
@@ -34,8 +98,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildServiceCard(
-    BuildContext context, {
+  Widget _buildServiceCard({
     required String title,
     required IconData icon,
     required VoidCallback onTap,
@@ -44,6 +107,9 @@ class DashboardPage extends StatelessWidget {
       onTap: onTap,
       child: Card(
         elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
