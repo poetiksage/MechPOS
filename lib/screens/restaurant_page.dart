@@ -7,6 +7,7 @@ import 'package:mech_pos/models/menu_category.dart';
 import 'package:mech_pos/models/menu_item.dart';
 import 'package:mech_pos/models/printer_info.dart';
 import 'package:mech_pos/models/restaurant_info.dart';
+import 'package:mech_pos/services/order_service.dart';
 import 'package:mech_pos/services/printer_prefs.dart';
 import 'package:mech_pos/services/printer_service.dart';
 import 'package:mech_pos/services/restaurant_service.dart';
@@ -40,6 +41,16 @@ class _RestaurantPageState extends State<RestaurantPage> {
   void initState() {
     super.initState();
     _loadMenus();
+  }
+
+  String _generateOrderId() {
+    final now = DateTime.now();
+    return "ORD-${now.year}"
+        "${now.month.toString().padLeft(2, '0')}"
+        "${now.day.toString().padLeft(2, '0')}-"
+        "${now.hour.toString().padLeft(2, '0')}"
+        "${now.minute.toString().padLeft(2, '0')}"
+        "${now.second.toString().padLeft(2, '0')}";
   }
 
   // Load food and drinks menu from assets
@@ -98,10 +109,15 @@ class _RestaurantPageState extends State<RestaurantPage> {
 
   // Print to a specific printer
   void _printToPrinter(PrinterInfo printer) async {
+    if (cart.isEmpty) return;
+
     final totals = _calculateTotals();
     final subtotal = totals["subtotal"]!;
     final tax = totals["tax"]!;
     final total = totals["total"]!;
+
+    final orderId = _generateOrderId();
+    final orderTime = DateTime.now();
 
     if (!mounted) return;
 
@@ -110,10 +126,20 @@ class _RestaurantPageState extends State<RestaurantPage> {
     ).showSnackBar(const SnackBar(content: Text("Printing...")));
 
     try {
-      // Fetch restaurant info just before printing
+      // 1. Fetch restaurant info
       final RestaurantInfo restaurant =
           await RestaurantService.fetchRestaurantInfo();
 
+      // 2. Save order to DB
+      await OrderService.createOrder(
+        orderId: orderId,
+        items: cart,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+      );
+
+      // 3. Print receipt
       final didPrint = await PrinterService.printRestaurantBill(
         ip: printer.ip,
         port: printer.port,
@@ -122,15 +148,18 @@ class _RestaurantPageState extends State<RestaurantPage> {
         tax: tax,
         total: total,
         restaurant: restaurant,
+        orderId: orderId,
+        orderTime: orderTime,
       );
 
       if (!mounted) return;
 
       if (didPrint) {
+        setState(() => cart.clear());
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("Bill printed")));
-        setState(() => cart.clear());
       } else {
         ScaffoldMessenger.of(
           context,
@@ -139,9 +168,9 @@ class _RestaurantPageState extends State<RestaurantPage> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to fetch restaurant info")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to generate bill")));
     }
   }
 

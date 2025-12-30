@@ -5,6 +5,7 @@ import 'package:mech_pos/screens/profile_page.dart';
 import 'package:mech_pos/screens/restaurant_page.dart';
 import 'package:mech_pos/screens/settings_page.dart';
 import 'package:mech_pos/services/auth_service.dart';
+import 'package:mech_pos/widgets/reprint_dialog.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -25,16 +26,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _openReprintDialog() {
+    showDialog(context: context, builder: (_) => const ReprintDialog());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
       body: Padding(
@@ -50,9 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const RestaurantPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const RestaurantPage()),
                 );
               },
             ),
@@ -62,9 +62,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const SettingsPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
                 );
               },
             ),
@@ -74,9 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const ProfilePage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ProfilePage()),
                 );
               },
             ),
@@ -86,11 +82,14 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const MenuPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MenuPage()),
                 );
               },
+            ),
+            _buildServiceCard(
+              title: 'Reprint Receipt',
+              icon: Icons.print,
+              onTap: _openReprintDialog,
             ),
           ],
         ),
@@ -107,9 +106,7 @@ class _DashboardPageState extends State<DashboardPage> {
       onTap: onTap,
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),

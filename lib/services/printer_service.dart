@@ -39,11 +39,39 @@ class PrinterService {
     required double tax,
     required double total,
     required RestaurantInfo restaurant,
+    required String orderId,
+    required DateTime orderTime,
+    bool isReprint = false,
   }) async {
     final List<int> bytes = [];
 
     try {
       bytes.addAll(EscPosCommands.init());
+
+      // Reprint banner
+      if (isReprint) {
+        bytes.addAll(EscPosCommands.alignCenter());
+        bytes.addAll(EscPosCommands.boldOn());
+        bytes.addAll(EscPosCommands.text("***** DUPLICATE *****"));
+        bytes.addAll(EscPosCommands.boldOff());
+        bytes.addAll(EscPosCommands.text(""));
+        bytes.addAll(EscPosCommands.alignLeft());
+      }
+
+      bytes.addAll(EscPosCommands.alignLeft());
+      bytes.addAll(EscPosCommands.text(twoCol("Order ID", orderId)));
+
+      final formattedTime =
+          "${orderTime.day.toString().padLeft(2, '0')}/"
+          "${orderTime.month.toString().padLeft(2, '0')}/"
+          "${orderTime.year} "
+          "${orderTime.hour.toString().padLeft(2, '0')}:"
+          "${orderTime.minute.toString().padLeft(2, '0')}";
+
+      bytes.addAll(EscPosCommands.text(twoCol("Date", formattedTime)));
+      bytes.addAll(
+        EscPosCommands.text("----------------------------------------"),
+      );
 
       // Header
       bytes.addAll(EscPosCommands.alignCenter());

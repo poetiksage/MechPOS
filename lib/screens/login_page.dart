@@ -1,10 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'package:mech_pos/screens/dashboard_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mech_pos/services/api_client.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,11 +19,6 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    setState(() => _isLoading = true);
-
-    final baseUrl = dotenv.env["API_BASE_URL"];
-    final url = Uri.parse("$baseUrl/login.php");
-
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Email and password are required")),
@@ -38,40 +29,29 @@ class _LoginPageState extends State<LoginPage> {
     // if (!email.contains("@")) {
     //   ScaffoldMessenger.of(
     //     context,
-    //   ).showSnackBar(const SnackBar(
-    //       content: Text("Enter a valid email"),
-    //       duration: Duration(seconds: 3),
-    //     ));
+    //   ).showSnackBar(const SnackBar(content: Text("Enter a valid email")));
     //   return;
     // }
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode({"email": email, "password": password}),
-      );
+    setState(() => _isLoading = true);
 
-      final data = jsonDecode(response.body);
+    try {
+      final res = await ApiClient.post("login.php", {
+        "email": email,
+        "password": password,
+      });
 
       if (!mounted) return;
 
-      if (response.statusCode == 200 && data["status"] == true) {
-        final token = data["data"]["token"];
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString("auth_token", token);
-
+      if (res["status"] == true) {
+        // ✅ Session cookie is now stored automatically by Dio
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data["message"] ?? "Login failed")),
+          SnackBar(content: Text(res["message"] ?? "Login failed")),
         );
       }
     } catch (e) {
@@ -79,10 +59,10 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    setState(() => _isLoading = false);
   }
 
   @override

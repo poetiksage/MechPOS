@@ -1,125 +1,74 @@
-import 'dart:convert';
-import 'dart:io';
-
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
-  // Base URL
-  static String get _baseUrl {
-    final url = dotenv.env["API_BASE_URL"];
-    if (url == null || url.isEmpty) {
-      throw Exception("API_BASE_URL not set");
-    }
-    return url;
+  static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: dotenv.env["API_BASE_URL"]!.trim(),
+      headers: {"Content-Type": "application/json"},
+      validateStatus: (status) => status != null && status < 500,
+    ),
+  );
+
+  static bool _initialized = false;
+
+  static void _init() {
+    if (_initialized) return;
+
+    _dio.interceptors.add(CookieManager(CookieJar()));
+
+    _initialized = true;
   }
 
-  // Read token
-  static Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("auth_token");
-  }
-
-  // Build headers
-  static Future<Map<String, String>> _headers() async {
-    final token = await _getToken();
-
-    final headers = {"Content-Type": "application/json"};
-
-    if (token != null) {
-      headers["Authorization"] = "Bearer $token";
-    }
-
-    return headers;
-  }
-
-  // GET
   static Future<Map<String, dynamic>> get(String endpoint) async {
-    final url = Uri.parse("$_baseUrl/$endpoint");
-
-    try {
-      final response = await http.get(url, headers: await _headers());
-      return _handleResponse(response);
-    } on SocketException {
-      throw Exception("No internet connection");
-    }
+    _init();
+    final res = await _dio.get("/$endpoint");
+    return _handle(res);
   }
 
-  // POST  ✅ (added)
   static Future<Map<String, dynamic>> post(
     String endpoint,
     Map<String, dynamic> body,
   ) async {
-    final url = Uri.parse("$_baseUrl/$endpoint");
-
-    try {
-      final response = await http.post(
-        url,
-        headers: await _headers(),
-        body: jsonEncode(body),
-      );
-      return _handleResponse(response);
-    } on SocketException {
-      throw Exception("No internet connection");
-    }
+    _init();
+    final res = await _dio.post("/$endpoint", data: body);
+    return _handle(res);
   }
 
-  // PUT
   static Future<Map<String, dynamic>> put(
     String endpoint,
     Map<String, dynamic> body,
   ) async {
-    final url = Uri.parse("$_baseUrl/$endpoint");
-
-    try {
-      final response = await http.put(
-        url,
-        headers: await _headers(),
-        body: jsonEncode(body),
-      );
-      return _handleResponse(response);
-    } on SocketException {
-      throw Exception("No internet connection");
-    }
+    _init();
+    final res = await _dio.put("/$endpoint", data: body);
+    return _handle(res);
   }
 
-  // DELETE  ✅ (added)
   static Future<Map<String, dynamic>> delete(
     String endpoint,
     Map<String, dynamic> body,
   ) async {
-    final url = Uri.parse("$_baseUrl/$endpoint");
-
-    try {
-      final response = await http.delete(
-        url,
-        headers: await _headers(),
-        body: jsonEncode(body),
-      );
-      return _handleResponse(response);
-    } on SocketException {
-      throw Exception("No internet connection");
-    }
+    _init();
+    final res = await _dio.delete("/$endpoint", data: body);
+    return _handle(res);
   }
 
-  // Central response handling
-  static Map<String, dynamic> _handleResponse(http.Response response) {
-    if (response.body.isEmpty) {
+  static Map<String, dynamic> _handle(Response res) {
+    if (res.data == null) {
       throw Exception("Empty response from server");
     }
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 401) {
+    if (res.statusCode == 401) {
       throw Exception("Unauthorized");
     }
 
-    if (response.statusCode >= 400) {
-      final message = data["message"] ?? "Request failed";
-      throw Exception(message);
+    if (res.statusCode != null && res.statusCode! >= 400) {
+      final msg = res.data["message"] ?? "Request failed";
+      throw Exception(msg);
     }
-    
-    return data;
+
+    return res.data;
   }
 }

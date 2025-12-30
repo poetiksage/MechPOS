@@ -3,7 +3,7 @@ import 'api_client.dart';
 
 class RestaurantService {
   static Future<RestaurantInfo> fetchRestaurantInfo() async {
-    final response = await ApiClient.get('/restaurant');
+    final response = await ApiClient.get('/restaurant.php');
 
     return RestaurantInfo.fromJson(response['data']);
   }
