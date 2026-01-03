@@ -9,7 +9,7 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  Map<String, dynamic> menu = {};
+  List<dynamic> menu = [];
   bool loading = true;
 
   @override
@@ -22,11 +22,19 @@ class _MenuPageState extends State<MenuPage> {
     try {
       final data = await ApiClient.get("menu/full.php");
 
-      // debugPrint("MENU API RESPONSE: $data");
-
       if (data["status"] == true) {
+        final rawMenu = data["data"]["menu"];
+
         setState(() {
-          menu = data["data"]["menu"] ?? {};
+          // FORCE menu into a List ALWAYS
+          if (rawMenu is List) {
+            menu = rawMenu;
+          } else if (rawMenu is Map) {
+            menu = rawMenu.values.toList();
+          } else {
+            menu = [];
+          }
+
           loading = false;
         });
       }
@@ -39,14 +47,14 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  Future<void> addItem(String categoryName, int categoryId) async {
+  Future<void> addItem(int categoryId) async {
     String name = "";
     String price = "";
 
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Add to $categoryName"),
+        title: Text("Add to $categoryId"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -185,16 +193,235 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  Widget buildCategory(String categoryName, dynamic categoryData) {
+  Future<void> _addCategory() async {
+    String name = "";
+    String type = "food"; // default
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Add Category"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: const InputDecoration(labelText: "Category Name"),
+              onChanged: (v) => name = v,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: type,
+              decoration: const InputDecoration(labelText: "Category Type"),
+              items: const [
+                DropdownMenuItem(value: "food", child: Text("Food")),
+                DropdownMenuItem(value: "drinks", child: Text("Drinks")),
+              ],
+              onChanged: (v) {
+                if (v != null) type = v;
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (name.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Category name is required")),
+                );
+                return;
+              }
+
+              try {
+                await ApiClient.post("menu/add_category.php", {
+                  "name": name.trim(),
+                  "type": type,
+                });
+
+                if (!mounted) return;
+
+                Navigator.pop(dialogContext);
+                fetchMenu();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Category added successfully")),
+                );
+              } catch (e) {
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editCategory(
+    int id,
+    String currentName,
+    String currentType,
+  ) async {
+    String name = currentName;
+    String type = currentType;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Edit Category"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: TextEditingController(text: currentName),
+              decoration: const InputDecoration(labelText: "Category Name"),
+              onChanged: (v) => name = v,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: type,
+              decoration: const InputDecoration(labelText: "Category Type"),
+              items: const [
+                DropdownMenuItem(value: "food", child: Text("Food")),
+                DropdownMenuItem(value: "drinks", child: Text("Drinks")),
+              ],
+              onChanged: (v) {
+                if (v != null) type = v;
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (name.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Category name is required")),
+                );
+                return;
+              }
+
+              try {
+                await ApiClient.put("menu/update_category.php", {
+                  "id": id,
+                  "name": name.trim(),
+                  "type": type,
+                });
+
+                if (!mounted) return;
+
+                Navigator.pop(dialogContext);
+                fetchMenu();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Category updated")),
+                );
+              } catch (e) {
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteCategory(int id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Delete Category"),
+        content: const Text(
+          "This category will be deleted permanently.\n\n"
+          "You cannot delete a category that has menu items.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ApiClient.delete("menu/delete_category.php", {"id": id});
+
+      if (!mounted) return;
+
+      fetchMenu();
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Category deleted")));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Widget buildCategory(Map<String, dynamic> category) {
+    final int categoryId = category["id"];
+    final String categoryName = category["name"];
+    final String categoryType = category["type"] ?? "food";
+
+    final List items = category["items"] is List
+        ? category["items"]
+        : (category["items"] as Map).values.toList();
+
     return Card(
       elevation: 3,
       child: ExpansionTile(
-        title: Text(
-          categoryName,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                categoryName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () =>
+                  _editCategory(categoryId, categoryName, categoryType),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20),
+              onPressed: () => _deleteCategory(categoryId),
+            ),
+          ],
         ),
         children: [
-          ...categoryData["items"].map<Widget>((item) {
+          ...items.map<Widget>((item) {
             return ListTile(
               title: Text(item["name"]),
               subtitle: Text("₹${item["price"]}"),
@@ -218,7 +445,7 @@ class _MenuPageState extends State<MenuPage> {
             child: TextButton.icon(
               icon: const Icon(Icons.add),
               label: const Text("Add Item"),
-              onPressed: () => addItem(categoryName, categoryData["id"]),
+              onPressed: () => addItem(categoryId),
             ),
           ),
         ],
@@ -232,12 +459,50 @@ class _MenuPageState extends State<MenuPage> {
       appBar: AppBar(title: const Text("Menu")),
       body: loading
           ? const Center(child: CircularProgressIndicator())
+          : menu.isEmpty
+          ? _buildEmptyState()
           : ListView(
               padding: const EdgeInsets.all(16),
-              children: menu.keys.map((categoryName) {
-                return buildCategory(categoryName, menu[categoryName]);
+              children: menu.map((category) {
+                return buildCategory(category);
               }).toList(),
             ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addCategory,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.restaurant_menu, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              "No menu found",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Start by adding a category and menu items",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text("Add Category"),
+              onPressed: _addCategory,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

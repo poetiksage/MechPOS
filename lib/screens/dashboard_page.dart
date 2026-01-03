@@ -6,6 +6,7 @@ import 'package:mech_pos/screens/restaurant_page.dart';
 import 'package:mech_pos/screens/settings_page.dart';
 import 'package:mech_pos/services/auth_service.dart';
 import 'package:mech_pos/widgets/reprint_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -15,6 +16,21 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  String? _userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString("user_name");
+    });
+  }
+
   void _logout() async {
     await AuthService.logout();
 
@@ -34,7 +50,20 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Dashboard'),
+            if (_userName != null)
+              Text(
+                'Welcome, $_userName',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+          ],
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],

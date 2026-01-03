@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mech_pos/screens/dashboard_page.dart';
 import 'package:mech_pos/services/api_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,6 +45,12 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (res["status"] == true) {
+        final user = res["data"]["user"];
+        
+        // Store name for UI use
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("user_name", user["name"]);
+
         // ✅ Session cookie is now stored automatically by Dio
         Navigator.pushReplacement(
           context,
